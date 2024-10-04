@@ -44,21 +44,13 @@ export const setAllStorage = async () => {
   const timestamp = new Date().toISOString();
 
   // LocalStorage
-  try {
-    if (!localStorage.getItem('testTimestamp')) {
-      localStorage.setItem('testTimestamp', timestamp);
-    }
-  } catch (e) {
-    console.error('LocalStorage not available:', e);
+  if (!localStorage.getItem('testTimestamp')) {
+    localStorage.setItem('testTimestamp', timestamp);
   }
 
   // SessionStorage
-  try {
-    if (!sessionStorage.getItem('testTimestamp')) {
-      sessionStorage.setItem('testTimestamp', timestamp);
-    }
-  } catch (e) {
-    console.error('SessionStorage not available:', e);
+  if (!sessionStorage.getItem('testTimestamp')) {
+    sessionStorage.setItem('testTimestamp', timestamp);
   }
 
   // IndexedDB
@@ -73,11 +65,7 @@ export const setAllStorage = async () => {
     Cookies.set('testTimestamp', timestamp, { expires: 7 }); // Set to expire in 7 days
   }
 
-  // HTTP-only Cookie (Note: This can only be set by the server)
-  // For demonstration purposes, we'll just set a regular cookie
-  if (!Cookies.get('httpOnlyTestTimestamp')) {
-    Cookies.set('httpOnlyTestTimestamp', timestamp, { expires: 7 });
-  }
+  // Note: HTTP-only cookie can't be set client-side
 };
 
 export const getAllStorage = () => {
@@ -87,7 +75,7 @@ export const getAllStorage = () => {
       sessionStorage: sessionStorage.getItem('testTimestamp') || 'Not set',
       indexedDB: 'Checking...',
       browserCookie: Cookies.get('testTimestamp') || 'Not set',
-      httpOnlyCookie: Cookies.get('httpOnlyTestTimestamp') || 'Not set (or HTTP-only)',
+      httpOnlyCookie: 'Cannot be set or read client-side',
     };
 
     // Check IndexedDB
@@ -141,4 +129,5 @@ export const clearAllStorage = () => {
   // Clear Cookies
   Cookies.remove('testTimestamp');
   Cookies.remove('httpOnlyTestTimestamp');
+  // Remove the line that clears 'httpOnlyTestTimestamp'
 };

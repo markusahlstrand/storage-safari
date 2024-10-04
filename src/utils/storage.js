@@ -15,10 +15,22 @@ const setIndexedDB = (timestamp) => {
       const db = event.target.result;
       const transaction = db.transaction(['testStore'], 'readwrite');
       const objectStore = transaction.objectStore('testStore');
-      const addRequest = objectStore.put({ id: 'timestamp', value: timestamp });
-
-      addRequest.onsuccess = () => resolve();
-      addRequest.onerror = (event) => reject(event.target.error);
+      
+      // Check if a value already exists
+      const getRequest = objectStore.get('timestamp');
+      
+      getRequest.onsuccess = (event) => {
+        if (!event.target.result) {
+          // Only set if no value exists
+          const addRequest = objectStore.put({ id: 'timestamp', value: timestamp });
+          addRequest.onsuccess = () => resolve();
+          addRequest.onerror = (event) => reject(event.target.error);
+        } else {
+          resolve(); // Value already exists, do nothing
+        }
+      };
+      
+      getRequest.onerror = (event) => reject(event.target.error);
     };
 
     request.onupgradeneeded = (event) => {
@@ -33,14 +45,18 @@ export const setAllStorage = async () => {
 
   // LocalStorage
   try {
-    localStorage.setItem('testTimestamp', timestamp);
+    if (!localStorage.getItem('testTimestamp')) {
+      localStorage.setItem('testTimestamp', timestamp);
+    }
   } catch (e) {
     console.error('LocalStorage not available:', e);
   }
 
   // SessionStorage
   try {
-    sessionStorage.setItem('testTimestamp', timestamp);
+    if (!sessionStorage.getItem('testTimestamp')) {
+      sessionStorage.setItem('testTimestamp', timestamp);
+    }
   } catch (e) {
     console.error('SessionStorage not available:', e);
   }
@@ -53,11 +69,15 @@ export const setAllStorage = async () => {
   }
 
   // Browser Cookie
-  Cookies.set('testTimestamp', timestamp, { expires: 7 }); // Set to expire in 7 days
+  if (!Cookies.get('testTimestamp')) {
+    Cookies.set('testTimestamp', timestamp, { expires: 7 }); // Set to expire in 7 days
+  }
 
   // HTTP-only Cookie (Note: This can only be set by the server)
   // For demonstration purposes, we'll just set a regular cookie
-  Cookies.set('httpOnlyTestTimestamp', timestamp, { expires: 7 });
+  if (!Cookies.get('httpOnlyTestTimestamp')) {
+    Cookies.set('httpOnlyTestTimestamp', timestamp, { expires: 7 });
+  }
 };
 
 export const getAllStorage = () => {

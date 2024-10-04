@@ -53,11 +53,11 @@ export const setAllStorage = async () => {
   }
 
   // Browser Cookie
-  Cookies.set('testTimestamp', timestamp);
+  Cookies.set('testTimestamp', timestamp, { expires: 7 }); // Set to expire in 7 days
 
   // HTTP-only Cookie (Note: This can only be set by the server)
   // For demonstration purposes, we'll just set a regular cookie
-  Cookies.set('httpOnlyTestTimestamp', timestamp, { httpOnly: true });
+  Cookies.set('httpOnlyTestTimestamp', timestamp, { expires: 7 });
 };
 
 export const getAllStorage = () => {

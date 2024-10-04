@@ -20,7 +20,7 @@ const Index = () => {
   }, []);
 
   const handleClearStorage = async () => {
-    clearAllStorage();
+    await clearAllStorage();
     await updateStorageData();
   };
 

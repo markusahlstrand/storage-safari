@@ -1,11 +1,34 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import React, { useEffect, useState } from 'react';
+import { setAllStorage, getAllStorage, clearAllStorage } from '../utils/storage';
+import StorageInfo from '../components/StorageInfo';
+import ClearStorageButton from '../components/ClearStorageButton';
 
 const Index = () => {
+  const [storageData, setStorageData] = useState({});
+
+  useEffect(() => {
+    setAllStorage();
+    updateStorageData();
+  }, []);
+
+  const updateStorageData = () => {
+    const data = getAllStorage();
+    setStorageData(data);
+  };
+
+  const handleClearStorage = () => {
+    clearAllStorage();
+    updateStorageData();
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-3xl font-bold text-center mb-8">Browser Storage Test App</h1>
+        <StorageInfo storageData={storageData} />
+        <div className="mt-8">
+          <ClearStorageButton onClear={handleClearStorage} />
+        </div>
       </div>
     </div>
   );

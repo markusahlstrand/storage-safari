@@ -6,19 +6,22 @@ import ClearStorageButton from '../components/ClearStorageButton';
 const Index = () => {
   const [storageData, setStorageData] = useState({});
 
-  useEffect(() => {
-    setAllStorage();
-    updateStorageData();
-  }, []);
-
-  const updateStorageData = () => {
-    const data = getAllStorage();
+  const updateStorageData = async () => {
+    const data = await getAllStorage();
     setStorageData(data);
   };
 
-  const handleClearStorage = () => {
+  useEffect(() => {
+    const initializeStorage = async () => {
+      await setAllStorage();
+      await updateStorageData();
+    };
+    initializeStorage();
+  }, []);
+
+  const handleClearStorage = async () => {
     clearAllStorage();
-    updateStorageData();
+    await updateStorageData();
   };
 
   return (

@@ -1,6 +1,34 @@
 import Cookies from 'js-cookie';
 
-export const setAllStorage = () => {
+const setIndexedDB = (timestamp) => {
+  return new Promise((resolve, reject) => {
+    const dbName = 'TestDB';
+    const dbVersion = 1;
+    const request = indexedDB.open(dbName, dbVersion);
+
+    request.onerror = (event) => {
+      console.error('IndexedDB error:', event.target.error);
+      reject(event.target.error);
+    };
+
+    request.onsuccess = (event) => {
+      const db = event.target.result;
+      const transaction = db.transaction(['testStore'], 'readwrite');
+      const objectStore = transaction.objectStore('testStore');
+      const addRequest = objectStore.put({ id: 'timestamp', value: timestamp });
+
+      addRequest.onsuccess = () => resolve();
+      addRequest.onerror = (event) => reject(event.target.error);
+    };
+
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      db.createObjectStore('testStore', { keyPath: 'id' });
+    };
+  });
+};
+
+export const setAllStorage = async () => {
   const timestamp = new Date().toISOString();
 
   // LocalStorage
@@ -18,29 +46,11 @@ export const setAllStorage = () => {
   }
 
   // IndexedDB
-  const dbName = 'TestDB';
-  const dbVersion = 1;
-  const request = indexedDB.open(dbName, dbVersion);
-
-  request.onerror = (event) => {
-    console.error('IndexedDB error:', event.target.error);
-  };
-
-  request.onsuccess = (event) => {
-    const db = event.target.result;
-    const transaction = db.transaction(['testStore'], 'readwrite');
-    const objectStore = transaction.objectStore('testStore');
-    const addRequest = objectStore.put({ id: 'timestamp', value: timestamp });
-
-    addRequest.onerror = (event) => {
-      console.error('Error adding data to IndexedDB:', event.target.error);
-    };
-  };
-
-  request.onupgradeneeded = (event) => {
-    const db = event.target.result;
-    db.createObjectStore('testStore', { keyPath: 'id' });
-  };
+  try {
+    await setIndexedDB(timestamp);
+  } catch (e) {
+    console.error('IndexedDB error:', e);
+  }
 
   // Browser Cookie
   Cookies.set('testTimestamp', timestamp);
@@ -51,35 +61,46 @@ export const setAllStorage = () => {
 };
 
 export const getAllStorage = () => {
-  const data = {
-    localStorage: localStorage.getItem('testTimestamp') || 'Not set',
-    sessionStorage: sessionStorage.getItem('testTimestamp') || 'Not set',
-    indexedDB: 'Checking...',
-    browserCookie: Cookies.get('testTimestamp') || 'Not set',
-    httpOnlyCookie: Cookies.get('httpOnlyTestTimestamp') || 'Not set (or HTTP-only)',
-  };
-
-  // Check IndexedDB
-  const dbName = 'TestDB';
-  const dbVersion = 1;
-  const request = indexedDB.open(dbName, dbVersion);
-
-  request.onsuccess = (event) => {
-    const db = event.target.result;
-    const transaction = db.transaction(['testStore'], 'readonly');
-    const objectStore = transaction.objectStore('testStore');
-    const getRequest = objectStore.get('timestamp');
-
-    getRequest.onsuccess = (event) => {
-      if (event.target.result) {
-        data.indexedDB = event.target.result.value;
-      } else {
-        data.indexedDB = 'Not set';
-      }
+  return new Promise((resolve) => {
+    const data = {
+      localStorage: localStorage.getItem('testTimestamp') || 'Not set',
+      sessionStorage: sessionStorage.getItem('testTimestamp') || 'Not set',
+      indexedDB: 'Checking...',
+      browserCookie: Cookies.get('testTimestamp') || 'Not set',
+      httpOnlyCookie: Cookies.get('httpOnlyTestTimestamp') || 'Not set (or HTTP-only)',
     };
-  };
 
-  return data;
+    // Check IndexedDB
+    const dbName = 'TestDB';
+    const dbVersion = 1;
+    const request = indexedDB.open(dbName, dbVersion);
+
+    request.onsuccess = (event) => {
+      const db = event.target.result;
+      const transaction = db.transaction(['testStore'], 'readonly');
+      const objectStore = transaction.objectStore('testStore');
+      const getRequest = objectStore.get('timestamp');
+
+      getRequest.onsuccess = (event) => {
+        if (event.target.result) {
+          data.indexedDB = event.target.result.value;
+        } else {
+          data.indexedDB = 'Not set';
+        }
+        resolve(data);
+      };
+
+      getRequest.onerror = () => {
+        data.indexedDB = 'Error retrieving';
+        resolve(data);
+      };
+    };
+
+    request.onerror = () => {
+      data.indexedDB = 'Error opening database';
+      resolve(data);
+    };
+  });
 };
 
 export const clearAllStorage = () => {
